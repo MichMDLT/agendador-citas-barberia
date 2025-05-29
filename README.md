@@ -1,4 +1,4 @@
-# 💈 Barbería 'Clásica' - Agenda de Citas
+# 💈 Barbería y peluquría 'Clásica' - Agenda de Citas
 
 Una aplicación de escritorio sencilla pero funcional,
 desarrollada con **Python, Tkinter y MongoDB**, 
@@ -12,7 +12,7 @@ para gestionar sus citas de manera práctica y eficiente.
 - 🔁 Edición y eliminación de citas.
 - ✅ Validación para evitar duplicados.
 - 💾 Conexión a base de datos MongoDB en la nube.
-- 🎨 Interfaz minimalista con estilo **Gold, Navy & Dark Mode**.
+- 🎨 **Interfaz minimalista**.
 
 
 ## 🖼️ Captura de pantalla:
