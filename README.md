@@ -9,7 +9,7 @@ para gestionar sus citas de manera práctica y eficiente.
 ## ✨ Características:
 - 📅 Registro de citas con fecha y hora.
 - 🧍 Asignación de barberos y servicios.
-- 🔁 Edición y eliminación de citas.
+- 🔁 Creación, edición y eliminación de citas.
 - ✅ Validación para evitar duplicados.
 - 💾 Conexión a base de datos MongoDB.
 - 🎨 **Interfaz minimalista**.
