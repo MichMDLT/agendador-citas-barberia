@@ -1,4 +1,4 @@
-# 💈 Barbería Clásica - Agenda de Citas
+# 💈 Barbería 'Clásica' - Agenda de Citas
 
 Una aplicación de escritorio sencilla pero funcional,
 desarrollada con **Python, Tkinter y MongoDB**, 
