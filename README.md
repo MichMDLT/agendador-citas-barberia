@@ -11,7 +11,7 @@ para gestionar sus citas de manera práctica y eficiente.
 - 🧍 Asignación de barberos y servicios.
 - 🔁 Edición y eliminación de citas.
 - ✅ Validación para evitar duplicados.
-- 💾 Conexión a base de datos MongoDB en la nube.
+- 💾 Conexión a base de datos MongoDB.
 - 🎨 **Interfaz minimalista**.
 
 
