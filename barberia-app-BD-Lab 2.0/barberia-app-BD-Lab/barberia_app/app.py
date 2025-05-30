@@ -15,6 +15,11 @@ db = client[os.getenv("DB_NAME")]
 # Verifica colección sino existe la crearla
 if "citas" not in db.list_collection_names():
     db.create_collection("citas")
+if "barberos" not in db.list_collection_names():
+	db.create_collection("barberos")
+if "servicios" not in db.list_collection_names():
+	db.create_collection("servicios")
+
 citas = db["citas"]
 barberos = db["barberos"]
 servicios = db["servicios"]
@@ -34,7 +39,7 @@ def obtener_servicios():
 
 # Datos de la colección Barberos ------------------------------
 def obtener_barberos():
-    return [barbero["nombre"] for barbero in barberos.find()] 
+    return [barbero["nombre"]+" "+barbero["ap_primero"]+" "+barbero["ap_segundo"] for barbero in barberos.find()] 
 
 
 # --- Verificar conexión y colección ---
@@ -106,6 +111,80 @@ def limpiar_campos():
     combo_hora.set("")
     combo_servicio.set("")
     combo_barbero.set("")
+
+# Función para borrar cita
+def borrar_cita():
+    seleccionado = tabla.focus()
+    if not seleccionado:
+        messagebox.showerror("Error", "Selecciona una cita para borrar")
+        return
+    datos = tabla.item(seleccionado)
+    nombre = datos["values"][0]
+    fecha = datos["values"][1]
+    hora = datos["values"][2]
+    
+    confirmar = messagebox.askyesno("Confirmar", f"¿Borrar cita de {nombre} el {fecha} a las {hora}?")
+    if confirmar:
+        citas.delete_one({"nombre_cliente": nombre, "fecha": fecha, "hora": hora})
+        mostrar_citas()
+        messagebox.showinfo("Éxito", "Cita borrada")
+
+# Función para editar cita (rellena el formulario al seleccionar)
+def editar_cita():
+    seleccionado = tabla.focus()
+    if not seleccionado:
+        messagebox.showerror("Error", "Selecciona una cita para editar")
+        return
+    datos = tabla.item(seleccionado)
+    limpiar_campos()
+    entry_nombre.insert(0, datos["values"][0])
+    cal_fecha.set_date(datetime.strptime(datos["values"][1], "%Y-%m-%d").date())
+    combo_hora.set(datos["values"][2])
+    combo_servicio.set(datos["values"][3])
+    combo_barbero.set(datos["values"][4])
+
+#Función para actualizar cita tras el formulario
+def actualizar_cita():
+    seleccionado = tabla.focus()
+    if not seleccionado:
+        messagebox.showerror("Error", "Selecciona una cita para actualizar")
+        return
+        # Validar campos vacíos
+    if not all([entry_nombre.get(), combo_hora.get(), combo_servicio.get(), combo_barbero.get()]):
+        messagebox.showerror("Error", "Todos los campos son obligatorios")
+        return
+
+    # Obtener datos originales
+    datos = tabla.item(seleccionado)
+    nombre_original = datos["values"][0]
+    fecha_original = str(datos["values"][1])  # asegurarse que sea string
+    hora_original = str(datos["values"][2])
+
+    # Filtro original para encontrar la cita en MongoDB
+    filtro = {
+        "nombre_cliente": nombre_original,
+        "fecha": fecha_original,
+        "hora": hora_original
+    }
+
+    # Nuevos datos del formulario
+    nuevos_datos = {
+        "nombre_cliente": entry_nombre.get(),
+        "fecha": str(cal_fecha.get_date()),  # convertir a string
+        "hora": combo_hora.get(),
+        "servicio": combo_servicio.get(),
+        "barbero": combo_barbero.get()
+    }
+
+    # Actualizar en la base de datos
+    resultado = citas.update_one(filtro, {"$set": nuevos_datos})
+    
+    if resultado.modified_count > 0:
+        messagebox.showinfo("Éxito", "Cita actualizada")
+        mostrar_citas()  # <<<<<<<<<<<<<< Refrescar tabla
+        limpiar_campos()  # (opcional)
+    else:
+        messagebox.showwarning("Sin cambios", "No se modificó ningún dato")
 
 # Ventana principal
 root = tk.Tk()
@@ -181,77 +260,6 @@ actualizar_listas()
 
 # ----- Botón estilizado -----
 ttk.Button(frame_form, text="Guardar Cita", command=agregar_cita).grid(row=5, column=0, columnspan=2, pady=15)
-
-# Función para borrar cita
-def borrar_cita():
-    seleccionado = tabla.focus()
-    if not seleccionado:
-        messagebox.showerror("Error", "Selecciona una cita para borrar")
-        return
-    datos = tabla.item(seleccionado)
-    nombre = datos["values"][0]
-    fecha = datos["values"][1]
-    hora = datos["values"][2]
-    
-    confirmar = messagebox.askyesno("Confirmar", f"¿Borrar cita de {nombre} el {fecha} a las {hora}?")
-    if confirmar:
-        citas.delete_one({"nombre_cliente": nombre, "fecha": fecha, "hora": hora})
-        mostrar_citas()
-        messagebox.showinfo("Éxito", "Cita borrada")
-
-# Función para editar cita (rellena el formulario al seleccionar)
-def editar_cita():
-    seleccionado = tabla.focus()
-    if not seleccionado:
-        messagebox.showerror("Error", "Selecciona una cita para editar")
-        return
-    datos = tabla.item(seleccionado)
-    limpiar_campos()
-    entry_nombre.insert(0, datos["values"][0])
-    cal_fecha.set_date(datos["values"][1])
-    combo_hora.set(datos["values"][2])
-    combo_servicio.set(datos["values"][3])
-    combo_barbero.set(datos["values"][4])
-
-#Función para actualizar cita tras el formulario
-def actualizar_cita():
-    seleccionado = tabla.focus()
-    if not seleccionado:
-        messagebox.showerror("Error", "Selecciona una cita para actualizar")
-        return
-
-    # Obtener datos originales
-    datos = tabla.item(seleccionado)
-    nombre_original = datos["values"][0]
-    fecha_original = str(datos["values"][1])  # asegurarse que sea string
-    hora_original = str(datos["values"][2])
-
-    # Filtro original para encontrar la cita en MongoDB
-    filtro = {
-        "nombre_cliente": nombre_original,
-        "fecha": fecha_original,
-        "hora": hora_original
-    }
-
-    # Nuevos datos del formulario
-    nuevos_datos = {
-        "nombre_cliente": entry_nombre.get(),
-        "fecha": str(cal_fecha.get_date()),  # convertir a string
-        "hora": combo_hora.get(),
-        "servicio": combo_servicio.get(),
-        "barbero": combo_barbero.get()
-    }
-
-    # Actualizar en la base de datos
-    resultado = citas.update_one(filtro, {"$set": nuevos_datos})
-    
-    if resultado.modified_count > 0:
-        messagebox.showinfo("Éxito", "Cita actualizada")
-        mostrar_citas()  # <<<<<<<<<<<<<< Refrescar tabla
-        limpiar_campos()  # (opcional)
-    else:
-        messagebox.showwarning("Sin cambios", "No se modificó ningún dato")
-
 
 # ----- Frame para botones debajo de la tabla -----
 frame_botones = tk.Frame(root, bg="#f2f2f2")
