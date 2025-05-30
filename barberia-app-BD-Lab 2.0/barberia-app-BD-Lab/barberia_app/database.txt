@@ -1,0 +1,13 @@
+barberia_peluqueria
+	barberos
+		nombre
+		ap_primero
+		ap_segundo
+	citas
+		nombre_cliente
+		fecha
+		hora
+		servicio
+		barbero
+	servicios
+		nombre
