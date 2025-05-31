@@ -7,24 +7,8 @@ import os
 from PIL import Image, ImageTk
 from datetime import datetime
 
-# Cargar variables del .env
-load_dotenv()
-client = MongoClient(os.getenv("MONGO_URI"))
-db = client["barberia_peluqueria"]
-
-# Verifica colección sino existe la crearla
-if "citas" not in db.list_collection_names():
-    db.create_collection("citas")
-if "barberos" not in db.list_collection_names():
-    db.create_collection("barberos")
-if "servicios" not in db.list_collection_names():
-    db.create_collection("servicios")
-
-citas = db["citas"]
-barberos = db["barberos"]
-servicios = db["servicios"]
-
 # --- Funciones de utilidad ---
+# Obtiene una lista con los nombres de todos los servicios almacenados en la base de datos
 def obtener_servicios():
     try:
         return [servicio["nombre"] for servicio in servicios.find()]
@@ -32,12 +16,15 @@ def obtener_servicios():
         print("Error al obtener servicios:", e)
         return []
 
+#Obtiene una lista con los nombres completos de todos los barberos almacenados en la base de datos
 def obtener_barberos():
     return [barbero["nombre"]+" "+barbero["ap_primero"]+" "+barbero["ap_segundo"] for barbero in barberos.find()] 
 
+#Obtiene una lista de tuplas con el nombre, primer apellido y segundo apellido de cada barbero en la base de datos
 def obtener_barberos_completo():
     return [(barbero["nombre"], barbero["ap_primero"], barbero["ap_segundo"]) for barbero in barberos.find()]
 
+# Actualiza los combos y tablas de servicios y barberos con la información más reciente de la base de datos
 def actualizar_listas():
     combo_servicio['values'] = obtener_servicios()
     combo_barbero['values'] = obtener_barberos()
@@ -74,6 +61,7 @@ def ocultar_todos_frames():
     servicios_frame.pack_forget()
 
 # --- Funciones para Barberos ---
+# Agrega un nuevo barbero a la base de datos si no existe, valida campos obligatorios y actualiza la interfaz
 def agregar_barbero():
     nombre = entry_nombre_barbero.get().strip()
     ap1 = entry_ap1_barbero.get().strip()
@@ -97,6 +85,7 @@ def agregar_barbero():
     mostrar_barberos()
     actualizar_listas()
 
+# Muestra la lista de barberos en la tabla, limpia los campos de entrada y permite borrar un barbero seleccionado tras confirmación
 def mostrar_barberos():
     for row in tabla_barberos.get_children():
         tabla_barberos.delete(row)
@@ -128,6 +117,7 @@ def borrar_barbero():
         actualizar_listas()
 
 # --- Funciones para Servicios ---
+# Agrega un nuevo servicio si no existe, mostrando mensajes de error o éxito según corresponda
 def agregar_servicio():
     nombre = entry_nombre_servicio.get().strip()
     
@@ -145,6 +135,7 @@ def agregar_servicio():
     mostrar_servicios()
     actualizar_listas()
 
+# Muestra la lista de servicios en la tabla limpiando primero los datos previos
 def mostrar_servicios():
     for row in tabla_servicios.get_children():
         tabla_servicios.delete(row)
@@ -152,6 +143,7 @@ def mostrar_servicios():
     for servicio in servicios.find():
         tabla_servicios.insert("", "end", values=(servicio["nombre"],))
 
+# Elimina el servicio seleccionado tras confirmar y actualiza la interfaz
 def borrar_servicio():
     seleccionado = tabla_servicios.focus()
     if not seleccionado:
@@ -165,6 +157,7 @@ def borrar_servicio():
         actualizar_listas()
 
 # --- Funciones para Citas (modificadas) ---
+# Agrega una nueva cita verificando campos obligatorios, evita duplicados y actualiza la interfaz
 def agregar_cita():
     try:
         if not all([entry_nombre.get(), combo_hora.get(), combo_servicio.get(), combo_barbero.get()]):
@@ -192,6 +185,7 @@ def agregar_cita():
     except Exception as e:
         messagebox.showerror("Error", f"Error al guardar: {str(e)}")
 
+# Muestra todas las citas actuales en la tabla limpiando primero los datos previos
 def mostrar_citas():
     for row in tabla.get_children():
         tabla.delete(row)
@@ -204,12 +198,14 @@ def mostrar_citas():
             cita["barbero"]
         ))
 
+# Limpia los campos de entrada y selección del formulario de citas
 def limpiar_campos():
     entry_nombre.delete(0, END)
     combo_hora.set("")
     combo_servicio.set("")
     combo_barbero.set("")
 
+# Elimina la cita seleccionada tras confirmación del usuario
 def borrar_cita():
     seleccionado = tabla.focus()
     if not seleccionado:
@@ -223,6 +219,7 @@ def borrar_cita():
         citas.delete_one({"nombre_cliente": nombre, "fecha": fecha, "hora": hora})
         mostrar_citas()
 
+# Carga los datos de la cita seleccionada en los campos del formulario para editarla
 def editar_cita():
     seleccionado = tabla.focus()
     if not seleccionado:
@@ -235,6 +232,7 @@ def editar_cita():
     combo_servicio.set(datos["values"][3])
     combo_barbero.set(datos["values"][4])
 
+# Actualiza la cita seleccionada con los datos nuevos ingresados en el formulario
 def actualizar_cita():
     seleccionado = tabla.focus()
     if not seleccionado:
@@ -271,30 +269,8 @@ def actualizar_cita():
     else:
         messagebox.showwarning("Sin cambios", "No se modificó ningún dato")
 
-# --- Creación de la ventana principal ---
-root = tk.Tk()
-root.title("Sistema de Gestión - Barbería")
-root.geometry("900x700")
-root.configure(bg="#f2f2f2")
-
-# --- Frames para las diferentes secciones ---
-menu_frame = Frame(root, bg="#f2f2f2")
-citas_frame = Frame(root, bg="#f2f2f2")
-barberos_frame = Frame(root, bg="#f2f2f2")
-servicios_frame = Frame(root, bg="#f2f2f2")
-
-# --- Estilos ---
-style = ttk.Style()
-style.theme_use("clam")
-style.configure("TLabel", font=("Arial", 11), background="#f2f2f2")
-style.configure("TButton", font=("Arial", 12, "bold"), foreground="white", background="#003366", padding=10)
-style.map("TButton", background=[("active", "#cc0000")])
-style.configure("TCombobox", padding=5, font=("Arial", 11))
-style.configure("Treeview", font=("Arial", 11), rowheight=28, background="white", fieldbackground="white", foreground="black")
-style.configure("Treeview.Heading", font=("Arial", 12, "bold"), background="#003366", foreground="white")
-style.map("Treeview", background=[("selected", "#cc0000")], foreground=[("selected", "white")])
-
 # Función para mostrar el logo en diferentes secciones
+# Muestra el logo en el frame dado, o un texto alternativo si no se puede cargar la imagen
 def mostrar_logo(frame):
     try:
         logo_original = Image.open("logo.png")
@@ -310,6 +286,7 @@ def mostrar_logo(frame):
 # ======================
 # MENÚ PRINCIPAL
 # ======================
+# Crea el menú principal con logo, título, botones de navegación y pie de página en el frame del menú
 def crear_menu():
     # Logo
     try:
@@ -343,21 +320,18 @@ def crear_menu():
 # ======================
 # SECCIÓN CITAS
 # ======================
+# Crea la interfaz para la sección de gestión de citas, con formulario, botones, tabla y navegación al menú principal
 def crear_seccion_citas():
-    # Botón superior izquierdo (NUEVO FRAME)
     top_button_frame = Frame(citas_frame, bg="#f2f2f2")
     top_button_frame.pack(fill="x", pady=(10, 0))
     ttk.Button(top_button_frame, text="← Menú Principal", 
                command=mostrar_menu).pack(side="left", padx=10, anchor="nw")  # anchor nw para esquina noroeste
 
-    # Logo debajo del botón
     mostrar_logo(citas_frame)
     
-    # Resto del código igual...
     header_frame = Frame(citas_frame, bg="#f2f2f2")
     header_frame.pack(fill="x", pady=10)
     
-    # ELIMINAR el botón de aquí ↓
     Label(header_frame, text="Gestión de Citas", 
         font=("Arial", 16, "bold"), bg="#f2f2f2", fg="#003366").pack(padx=20, pady=10)
 
@@ -424,6 +398,7 @@ def crear_seccion_citas():
 # ======================
 # SECCIÓN BARBEROS
 # ======================
+# Crea la interfaz para la sección de gestión de barberos, con formulario, botones, tabla y navegación al menú principal
 def crear_seccion_barberos():
     # Botón superior izquierdo
     top_button_frame = Frame(barberos_frame, bg="#f2f2f2")
@@ -436,7 +411,6 @@ def crear_seccion_barberos():
     header_frame = Frame(barberos_frame, bg="#f2f2f2")
     header_frame.pack(fill="x", pady=10)
     
-    # Eliminar el botón de aquí ↓
     Label(header_frame, text="Gestión de Barberos", 
           font=("Arial", 16, "bold"), bg="#f2f2f2", fg="#003366").pack(padx=20, pady=10)
 
@@ -489,6 +463,7 @@ def crear_seccion_barberos():
 # ======================
 # SECCIÓN SERVICIOS
 # ======================
+# Crea la interfaz para la sección de gestión de servicios, con formulario, botones, tabla y navegación al menú principal
 def crear_seccion_servicios():
     # Botón superior izquierdo
     top_button_frame = Frame(servicios_frame, bg="#f2f2f2")
@@ -543,6 +518,48 @@ def crear_seccion_servicios():
     scroll.pack(side="right", fill="y")
     tabla_servicios.configure(yscrollcommand=scroll.set)
     tabla_servicios.pack(fill="both", expand=True)
+
+
+# Cargar variables del .env para la base de datos, se obtiene la base de datos barberia_peluqueria
+load_dotenv()
+client = MongoClient(os.getenv("MONGO_URI"))
+db = client["barberia_peluqueria"]
+
+# Verifica colección sino existe la crearla
+if "citas" not in db.list_collection_names():
+    db.create_collection("citas")
+if "barberos" not in db.list_collection_names():
+    db.create_collection("barberos")
+if "servicios" not in db.list_collection_names():
+    db.create_collection("servicios")
+
+#obtiene cada colección de la base de datos barberia_peluqueria
+citas = db["citas"]
+barberos = db["barberos"]
+servicios = db["servicios"]
+
+# --- Creación de la ventana principal ---
+root = tk.Tk()
+root.title("Sistema de Gestión - Barbería")
+root.geometry("900x700")
+root.configure(bg="#f2f2f2")
+
+# --- Frames para las diferentes secciones ---
+menu_frame = Frame(root, bg="#f2f2f2")
+citas_frame = Frame(root, bg="#f2f2f2")
+barberos_frame = Frame(root, bg="#f2f2f2")
+servicios_frame = Frame(root, bg="#f2f2f2")
+
+# --- Estilos ---
+style = ttk.Style()
+style.theme_use("clam")
+style.configure("TLabel", font=("Arial", 11), background="#f2f2f2")
+style.configure("TButton", font=("Arial", 12, "bold"), foreground="white", background="#003366", padding=10)
+style.map("TButton", background=[("active", "#cc0000")])
+style.configure("TCombobox", padding=5, font=("Arial", 11))
+style.configure("Treeview", font=("Arial", 11), rowheight=28, background="white", fieldbackground="white", foreground="black")
+style.configure("Treeview.Heading", font=("Arial", 12, "bold"), background="#003366", foreground="white")
+style.map("Treeview", background=[("selected", "#cc0000")], foreground=[("selected", "white")])
 
 # --- Inicializar secciones ---
 crear_menu()
