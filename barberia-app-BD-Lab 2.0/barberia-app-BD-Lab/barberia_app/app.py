@@ -10,7 +10,7 @@ from datetime import datetime
 # Cargar variables del .env
 load_dotenv()
 client = MongoClient(os.getenv("MONGO_URI"))
-db = client[os.getenv("DB_NAME")]
+db = client["barberia_peluqueria"]
 
 # Verifica colección sino existe la crearla
 if "citas" not in db.list_collection_names():
