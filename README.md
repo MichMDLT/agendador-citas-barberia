@@ -56,5 +56,5 @@ Gracias a quienes aportaron ideas, sugerencias, código y motivación:
 
 - [Michelle Mtz.] (https://github.com/MichMDLT)
 - [CesOrtizCasta] (https://github.com/CesOrtizCasta)
-- [Almendra Castro Morín]
+- [Almendra Castro Morín] (https://github.com/AlmendraMorin)
 - [Fabián González Castañeda] (https://github.com/FabianGzCa)
